@@ -1,2 +1,2 @@
 # is
-Droppable testing helpers for Go
+Lightweight testing mini-framework for Go.
