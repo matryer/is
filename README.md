@@ -7,7 +7,7 @@ Lightweight testing mini-framework for Go.
 
 ![Examples of failures](https://github.com/matryer/is/raw/master/misc/delicious-failures.png)
 
-Usage
+### Usage
 
 The following code shows a range of useful ways you can use
 the helper methods:
