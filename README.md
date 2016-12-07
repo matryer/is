@@ -1,8 +1,8 @@
 # is
 Lightweight testing mini-framework for Go.
 
-* Simple, easy to write and read
-* is.Equal, is.OK and is.NoErr
+* Easy to write and read
+* Simple API: `is.Equal`, `is.OK` and `is.NoErr`
 * Use comments to add descriptions which show up when tests fail
 
 ![Examples of failures](https://github.com/matryer/is/raw/master/misc/delicious-failures.png)
