@@ -5,6 +5,8 @@ Lightweight testing mini-framework for Go.
 * is.Equal, is.OK and is.NoErr
 * Use comments to add descriptions which show up when tests fail
 
+![Examples of failures](https://github.com/matryer/is/raw/master/misc/delicious-failures.png)
+
 Usage
 
 The following code shows a range of useful ways you can use
