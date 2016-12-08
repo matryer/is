@@ -1,4 +1,4 @@
-# is [![GoDoc](https://godoc.org/github.com/matryer/is?status.png)](http://godoc.org/github.com/matryer/is) [![Go Report Card](https://goreportcard.com/badge/github.com/matryer/is)](https://goreportcard.com/report/github.com/matryer/is)
+# is [![GoDoc](https://godoc.org/github.com/matryer/is?status.png)](http://godoc.org/github.com/matryer/is) [![Go Report Card](https://goreportcard.com/badge/github.com/matryer/is)](https://goreportcard.com/report/github.com/matryer/is) [![Build Status](https://travis-ci.org/matryer/is.svg?branch=master)](https://travis-ci.org/matryer/is)
 Lightweight testing mini-framework for Go.
 
 * Easy to write and read
