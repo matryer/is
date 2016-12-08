@@ -2,7 +2,7 @@
 Lightweight testing mini-framework for Go.
 
 * Easy to write and read
-* Beautifully simple API: `is.Equal`, `is.OK` and `is.NoErr`
+* Beautifully simple API with everything you need: `is.Equal`, `is.OK`, `is.NoErr`, and `is.Fail`
 * Use comments to add descriptions (which show up when tests fail)
 
 Failures are very easy to read:
