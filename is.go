@@ -135,8 +135,12 @@ func (is *I) OK(expression bool) {
 // 	func Test(t *testing.T) {
 //		is := is.New(t)
 //		a := greet("Mat")
-//		is.Equal(a, "Hi Mat") // greet("Mat")
+//		is.Equal(a, "Hi Mat") // greeting
 // 	}
+//
+// Will output:
+//
+// 	file.go:123: Hey Mat != Hi Mat // greeting
 func (is *I) Equal(a, b interface{}) {
 	if !areEqual(a, b) {
 		if isNil(a) || isNil(b) {
@@ -171,10 +175,16 @@ func (is *I) valWithType(v interface{}) string {
 // 	func Test(t *testing.T) {
 //		is := is.New(t)
 //		val, err := getVal()
+//		is.NoErr(err)        // getVal error
 //		is.OK(len(val) > 10) // val cannot be short
 //	}
+//
+// Will output:
+//
+// 	file.go:123: err: not found // getVal error
 func (is *I) NoErr(err error) {
 	if err != nil {
+		is.logf("err: %s", err.Error())
 	}
 }
 
