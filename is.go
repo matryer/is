@@ -61,6 +61,7 @@ type T interface {
 	FailNow()
 }
 
+// I is the test helper harness.
 type I struct {
 	t        T
 	fail     func()
@@ -112,13 +113,17 @@ func (is *I) Fail() {
 }
 
 // OK asserts that the expression is true. The expression
-// code itself will be repeated if the assertion fails.
+// code itself will be reported if the assertion fails.
 //
 // 	func Test(t *testing.T) {
 //		is := is.New(t)
 //		val := method()
 //		is.OK(val != nil) // val should never be nil
 //	}
+//
+// Will output:
+//
+// 	file.go:123: false: val != nil
 func (is *I) OK(expression bool) {
 	if !expression {
 		is.log("false: $ARGS")
@@ -166,12 +171,10 @@ func (is *I) valWithType(v interface{}) string {
 // 	func Test(t *testing.T) {
 //		is := is.New(t)
 //		val, err := getVal()
-//		is.NoErr(err)
 //		is.OK(len(val) > 10) // val cannot be short
 //	}
 func (is *I) NoErr(err error) {
 	if err != nil {
-		is.logf(err.Error())
 	}
 }
 

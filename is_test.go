@@ -138,7 +138,7 @@ var tests = []struct {
 			err := errors.New("nope")
 			is.NoErr(err) // method shouldn't return error
 		},
-		Fail: "nope // method shouldn't return error",
+		Fail: "err: nope // method shouldn't return error",
 	},
 
 	// OK
