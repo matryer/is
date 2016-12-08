@@ -99,15 +99,11 @@ func (is *I) logf(format string, args ...interface{}) {
 //
 // 	func Test(t *testing.T) {
 //		is := is.New(t)
-//		n, err := readfile()
-//		if n < 10 {
-//			is.Fail() // should be more than 10 bytes
-//		}
-// 		// more test here...
+//      is.Fail() // TODO: write this test
 //	}
 //
 // In relaxed mode, execution will continue after a call to
-// Fail.
+// Fail, but that test will still fail.
 func (is *I) Fail() {
 	is.log("failed")
 }
