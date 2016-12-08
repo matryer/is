@@ -123,7 +123,7 @@ func (is *I) Fail() {
 //
 // Will output:
 //
-// 	file.go:123: false: val != nil
+// 	your_test.go:123: false: val != nil
 func (is *I) OK(expression bool) {
 	if !expression {
 		is.log("false: $ARGS")
@@ -140,7 +140,7 @@ func (is *I) OK(expression bool) {
 //
 // Will output:
 //
-// 	file.go:123: Hey Mat != Hi Mat // greeting
+// 	your_test.go:123: Hey Mat != Hi Mat // greeting
 func (is *I) Equal(a, b interface{}) {
 	if !areEqual(a, b) {
 		if isNil(a) || isNil(b) {
@@ -181,7 +181,7 @@ func (is *I) valWithType(v interface{}) string {
 //
 // Will output:
 //
-// 	file.go:123: err: not found // getVal error
+// 	your_test.go:123: err: not found // getVal error
 func (is *I) NoErr(err error) {
 	if err != nil {
 		is.logf("err: %s", err.Error())

@@ -1,4 +1,4 @@
-# is
+# is [![GoDoc](https://godoc.org/github.com/matryer/is?status.png)](http://godoc.org/github.com/matryer/is)
 Lightweight testing mini-framework for Go.
 
 * Easy to write and read
