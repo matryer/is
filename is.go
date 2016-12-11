@@ -161,12 +161,31 @@ func (is *I) Equal(a, b interface{}) {
 }
 
 // New is a method wrapper around the New function.
+// It allows you to write subtests using a fimilar
+// pattern:
+//
+// 	func Test(t *testing.T) {
+//		is := is.New(t)
+// 		t.Run("sub", func(t *testing.T) {
+// 			is := is.New(t)
+// 			// TODO: test
+// 		})
+// 	}
 func (is *I) New(t *testing.T) *I {
 	return New(t)
 }
 
 // NewRelaxed is a method wrapper aorund the NewRelaxed
-// method. It allows you to write subtests
+// method. It allows you to write subtests using a fimilar
+// pattern:
+//
+// 	func Test(t *testing.T) {
+//		is := is.New(t)
+// 		t.Run("sub", func(t *testing.T) {
+// 			is := is.New(t)
+// 			// TODO: test
+// 		})
+// 	}
 func (is *I) NewRelaxed(t *testing.T) *I {
 	return NewRelaxed(t)
 }
