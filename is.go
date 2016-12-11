@@ -46,6 +46,7 @@ import (
 	"reflect"
 	"runtime"
 	"strings"
+	"testing"
 )
 
 // T reports when failures occur.
@@ -157,6 +158,17 @@ func (is *I) Equal(a, b interface{}) {
 		}
 		is.logf("%s != %s", is.valWithType(a), is.valWithType(b))
 	}
+}
+
+// New is a method wrapper around the New function.
+func (is *I) New(t *testing.T) *I {
+	return New(t)
+}
+
+// NewRelaxed is a method wrapper aorund the NewRelaxed
+// method. It allows you to write subtests
+func (is *I) NewRelaxed(t *testing.T) *I {
+	return NewRelaxed(t)
 }
 
 func (is *I) valWithType(v interface{}) string {
