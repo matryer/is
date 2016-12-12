@@ -120,10 +120,10 @@ func (is *I) Fail() {
 //
 // Will output:
 //
-// 	your_test.go:123: false: val != nil
+// 	your_test.go:123: not ok: val != nil
 func (is *I) OK(expression bool) {
 	if !expression {
-		is.log("false: $ARGS")
+		is.log("not ok: $ARGS")
 	}
 }
 

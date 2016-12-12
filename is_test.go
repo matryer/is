@@ -147,7 +147,7 @@ var tests = []struct {
 		F: func(is *I) {
 			is.OK(1 == 2)
 		},
-		Fail: "false: 1 == 2",
+		Fail: "not ok: 1 == 2",
 	},
 }
 
