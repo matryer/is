@@ -5,25 +5,25 @@ package example
 // throughout this file.
 
 import (
-    "testing"
+	"testing"
 )
 
 func TestSomething(t *testing.T) {
-    // this comment will be extracted
+	// this comment will be extracted
 }
 
 func TestSomethingElse(t *testing.T) {
-    a, b := 1, 2
-    getB = func() int {
-        return b
-    }
-    is.OK(a == getB()) // should be the same
+	a, b := 1, 2
+	getB = func() int {
+		return b
+	}
+	is.True(a == getB()) // should be the same
 }
 
 func TestSomethingElseTpp(t *testing.T) {
-    a, b := 1, 2
-    getB = func() int {
-        return b
-    }
-    is.OK(a == getB())
+	a, b := 1, 2
+	getB = func() int {
+		return b
+	}
+	is.True(a == getB())
 }

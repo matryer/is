@@ -143,11 +143,11 @@ var tests = []struct {
 
 	// OK
 	{
-		N: "OK(1 == 2)",
+		N: "True(1 == 2)",
 		F: func(is *I) {
-			is.OK(1 == 2)
+			is.True(1 == 2)
 		},
-		Fail: "not ok: 1 == 2",
+		Fail: "not true: 1 == 2",
 	},
 }
 
@@ -195,7 +195,7 @@ func TestRelaxed(t *testing.T) {
 	is.out = &buf
 	is.colorful = false
 	is.NoErr(errors.New("oops"))
-	is.OK(1 == 2)
+	is.True(1 == 2)
 	actual := buf.String()
 	if !strings.Contains(actual, `oops`) {
 		t.Errorf("missing: oops")

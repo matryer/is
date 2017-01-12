@@ -109,21 +109,21 @@ func (is *I) Fail() {
 	is.log("failed")
 }
 
-// OK asserts that the expression is true. The expression
+// True asserts that the expression is true. The expression
 // code itself will be reported if the assertion fails.
 //
 // 	func Test(t *testing.T) {
 //		is := is.New(t)
 //		val := method()
-//		is.OK(val != nil) // val should never be nil
+//		is.True(val != nil) // val should never be nil
 //	}
 //
 // Will output:
 //
-// 	your_test.go:123: not ok: val != nil
-func (is *I) OK(expression bool) {
+// 	your_test.go:123: not true: val != nil
+func (is *I) True(expression bool) {
 	if !expression {
-		is.log("not ok: $ARGS")
+		is.log("not true: $ARGS")
 	}
 }
 
