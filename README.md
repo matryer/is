@@ -24,7 +24,7 @@ func Test(t *testing.T) {
 	is.Equal(signedin, true) // must be signed in
 	
 	body := readBody(r)
-	is.OK(strings.Contains(body, "Hi there"))
+	is.True(strings.Contains(body, "Hi there"))
 	
 }
 ```
