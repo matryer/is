@@ -2,7 +2,7 @@
 Professional lightweight testing mini-framework for Go.
 
 * Easy to write and read
-* [Beautifully simple API](https://godoc.org/github.com/matryer/is) with everything you need: `is.Equal`, `is.OK`, `is.NoErr`, and `is.Fail`
+* [Beautifully simple API](https://godoc.org/github.com/matryer/is) with everything you need: `is.Equal`, `is.True`, `is.NoErr`, and `is.Fail`
 * Use comments to add descriptions (which show up when tests fail)
 
 Failures are very easy to read:
@@ -24,7 +24,7 @@ func Test(t *testing.T) {
 	is.Equal(signedin, true) // must be signed in
 	
 	body := readBody(r)
-	is.OK(strings.Contains(body, "Hi there"))
+	is.True(strings.Contains(body, "Hi there"))
 	
 }
 ```
