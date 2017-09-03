@@ -276,16 +276,38 @@ func loadComment(path string, line int) (string, bool) {
 	for s.Scan() {
 		if i == line {
 			text := s.Text()
-			commentI := strings.Index(text, "//")
-			if commentI == -1 {
+			comment, extracted := extractCommentFromLine(text)
+			if !extracted {
 				return "", false // no comment
 			}
-			text = text[commentI+2:]
+			text = comment
 			text = strings.TrimSpace(text)
 			return text, true
 		}
 		i++
 	}
+	return "", false
+}
+
+func extractCommentFromLine(codeLine string) (string, bool) {
+	insideString := false
+	prevCommentSlash := false
+	for i := 0; i < len(codeLine); i++ {
+		symb := string(codeLine[i])
+		switch symb {
+		case "\"":
+			insideString = !insideString
+		case "/":
+			if prevCommentSlash {
+				return codeLine[i+1:], true
+			} else if !insideString {
+				prevCommentSlash = true
+			}
+		default:
+			prevCommentSlash = false
+		}
+	}
+
 	return "", false
 }
 
