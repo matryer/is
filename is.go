@@ -293,11 +293,10 @@ func extractCommentFromLine(codeLine string) (string, bool) {
 	insideString := false
 	prevCommentSlash := false
 	for i := 0; i < len(codeLine); i++ {
-		symb := string(codeLine[i])
-		switch symb {
-		case "\"":
+		switch codeLine[i] {
+		case '"':
 			insideString = !insideString
-		case "/":
+		case '/':
 			if prevCommentSlash {
 				return codeLine[i+1:], true
 			} else if !insideString {
