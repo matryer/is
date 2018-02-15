@@ -209,7 +209,7 @@ func TestRelaxed(t *testing.T) {
 }
 
 func TestLoadComment(t *testing.T) {
-	comment, ok := loadComment("./testdata/example_test.go", 12)
+	comment, ok := loadComment("./testdata/example_test.go", 14)
 	if !ok {
 		t.Errorf("loadComment: not ok")
 	}
@@ -219,7 +219,7 @@ func TestLoadComment(t *testing.T) {
 }
 
 func TestLoadArguments(t *testing.T) {
-	arguments, ok := loadArguments("./testdata/example_test.go", 20)
+	arguments, ok := loadArguments("./testdata/example_test.go", 23)
 	if !ok {
 		t.Errorf("loadArguments: not ok")
 	}
@@ -227,7 +227,7 @@ func TestLoadArguments(t *testing.T) {
 		t.Errorf("loadArguments: bad arguments %s", arguments)
 	}
 
-	arguments, ok = loadArguments("./testdata/example_test.go", 28)
+	arguments, ok = loadArguments("./testdata/example_test.go", 32)
 	if !ok {
 		t.Errorf("loadArguments: not ok")
 	}
@@ -235,7 +235,7 @@ func TestLoadArguments(t *testing.T) {
 		t.Errorf("loadArguments: bad arguments %s", arguments)
 	}
 
-	arguments, _ = loadArguments("./testdata/example_test.go", 26)
+	arguments, _ = loadArguments("./testdata/example_test.go", 28)
 	if len(arguments) > 0 {
 		t.Errorf("should be no arguments: %s", arguments)
 	}

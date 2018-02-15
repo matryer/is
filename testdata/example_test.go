@@ -6,6 +6,8 @@ package example
 
 import (
 	"testing"
+
+	"github.com/matryer/is"
 )
 
 func TestSomething(t *testing.T) {
@@ -13,16 +15,18 @@ func TestSomething(t *testing.T) {
 }
 
 func TestSomethingElse(t *testing.T) {
+	is := is.New(t)
 	a, b := 1, 2
-	getB = func() int {
+	getB := func() int {
 		return b
 	}
 	is.True(a == getB()) // should be the same
 }
 
 func TestSomethingElseTpp(t *testing.T) {
+	is := is.New(t)
 	a, b := 1, 2
-	getB = func() int {
+	getB := func() int {
 		return b
 	}
 	is.True(a == getB())
