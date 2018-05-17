@@ -70,12 +70,24 @@ type I struct {
 	colorful bool
 }
 
+var isColorful bool
+
+func init() {
+	isColorful = true
+	for i := range os.Args {
+		if os.Args[i] == "-nocolor" {
+			isColorful = false
+			break
+		}
+	}
+}
+
 // New makes a new testing helper using the specified
 // T through which failures will be reported.
 // In strict mode, failures call T.FailNow causing the test
 // to be aborted. See NewRelaxed for alternative behavior.
 func New(t T) *I {
-	return &I{t, t.FailNow, os.Stdout, true}
+	return &I{t, t.FailNow, os.Stdout, isColorful}
 }
 
 // NewRelaxed makes a new testing helper using the specified
@@ -83,7 +95,7 @@ func New(t T) *I {
 // In relaxed mode, failures call T.Fail allowing
 // multiple failures per test.
 func NewRelaxed(t T) *I {
-	return &I{t, t.Fail, os.Stdout, true}
+	return &I{t, t.Fail, os.Stdout, isColorful}
 }
 
 func (is *I) log(args ...interface{}) {
