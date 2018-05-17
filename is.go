@@ -39,6 +39,7 @@ package is
 import (
 	"bufio"
 	"bytes"
+	"flag"
 	"fmt"
 	"io"
 	"os"
@@ -73,13 +74,9 @@ type I struct {
 var isColorful bool
 
 func init() {
-	isColorful = true
-	for i := range os.Args {
-		if os.Args[i] == "-nocolor" {
-			isColorful = false
-			break
-		}
-	}
+	noColor := flag.Bool("nocolor", false, "turns off colors")
+	flag.Parse()
+	isColorful = !*noColor
 }
 
 // New makes a new testing helper using the specified
