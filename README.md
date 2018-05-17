@@ -28,3 +28,11 @@ func Test(t *testing.T) {
 	
 }
 ```
+
+## Color
+
+To turn off the colors, run `go test` with the `-nocolor` flag.
+
+```
+go test -nocolor
+```
