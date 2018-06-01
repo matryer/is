@@ -253,10 +253,7 @@ func areEqual(a, b interface{}) bool {
 	}
 	aValue := reflect.ValueOf(a)
 	bValue := reflect.ValueOf(b)
-	if aValue == bValue {
-		return true
-	}
-	return false
+	return aValue == bValue
 }
 
 func callerinfo() (path string, line int, ok bool) {
@@ -318,7 +315,7 @@ func loadArguments(path string, line int) (string, bool) {
 			text = text[braceI+1:]
 			cs := bufio.NewScanner(strings.NewReader(text))
 			cs.Split(bufio.ScanBytes)
-			i := 0
+			j := 0
 			c := 1
 			for cs.Scan() {
 				switch cs.Text() {
@@ -330,9 +327,9 @@ func loadArguments(path string, line int) (string, bool) {
 				if c == 0 {
 					break
 				}
-				i++
+				j++
 			}
-			text = text[:i]
+			text = text[:j]
 			return text, true
 		}
 		i++
