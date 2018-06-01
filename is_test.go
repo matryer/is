@@ -113,6 +113,33 @@ var tests = []struct {
 		},
 		Fail: ` // nil slice`,
 	},
+	{
+		N: "Equal(nil, nil)",
+		F: func(is *I) {
+			var s1 []string
+			var s2 []string
+			is.Equal(s1, s2) // nil slices
+		},
+		Fail: ``,
+	},
+	{
+		N: "Equal(nil, map)",
+		F: func(is *I) {
+			var m1 map[string]string
+			m2 := map[string]string{}
+			is.Equal(m1, m2) // nil map
+		},
+		Fail: ` // nil map`,
+	},
+	{
+		N: "Equal(nil, nil)",
+		F: func(is *I) {
+			var m1 map[string]string
+			var m2 map[string]string
+			is.Equal(m1, m2) // nil maps
+		},
+		Fail: ``,
+	},
 
 	// Fail
 	{
