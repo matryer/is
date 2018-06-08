@@ -113,6 +113,33 @@ var tests = []struct {
 		},
 		Fail: ` // nil slice`,
 	},
+	{
+		N: "Equal(nil, nil)",
+		F: func(is *I) {
+			var s1 []string
+			var s2 []string
+			is.Equal(s1, s2) // nil slices
+		},
+		Fail: ``,
+	},
+	{
+		N: "Equal(nil, map)",
+		F: func(is *I) {
+			var m1 map[string]string
+			m2 := map[string]string{}
+			is.Equal(m1, m2) // nil map
+		},
+		Fail: ` // nil map`,
+	},
+	{
+		N: "Equal(nil, nil)",
+		F: func(is *I) {
+			var m1 map[string]string
+			var m2 map[string]string
+			is.Equal(m1, m2) // nil maps
+		},
+		Fail: ``,
+	},
 
 	// Fail
 	{
@@ -244,9 +271,8 @@ func TestLoadArguments(t *testing.T) {
 // TestSubtests ensures subtests work as expected.
 // https://github.com/matryer/is/issues/1
 func TestSubtests(t *testing.T) {
-	is := New(t)
 	t.Run("sub1", func(t *testing.T) {
-		is := is.New(t)
+		is := New(t)
 		is.Equal(1+1, 2)
 	})
 }

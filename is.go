@@ -6,15 +6,15 @@
 //
 // The following failing test:
 //
-// 	func Test(t *testing.T) {
-// 		is := is.New(t)
-// 		a, b := 1, 2
-// 		is.Equal(a, b) // expect to be the same
-// 	}
+//	func Test(t *testing.T) {
+//		is := is.New(t)
+//		a, b := 1, 2
+//		is.Equal(a, b) // expect to be the same
+//	}
 //
 // Will output:
 //
-// 		your_test.go:123: 1 != 2 // expect to be the same
+//		your_test.go:123: 1 != 2 // expect to be the same
 //
 // Usage
 //
@@ -33,7 +33,7 @@
 //		body := readBody(r)
 //		is.True(strings.Contains(body, "Hi there"))
 //
-// 	}
+//	}
 package is
 
 import (
@@ -107,7 +107,7 @@ func (is *I) logf(format string, args ...interface{}) {
 
 // Fail immediately fails the test.
 //
-// 	func Test(t *testing.T) {
+//	func Test(t *testing.T) {
 //		is := is.New(t)
 //      is.Fail() // TODO: write this test
 //	}
@@ -121,7 +121,7 @@ func (is *I) Fail() {
 // True asserts that the expression is true. The expression
 // code itself will be reported if the assertion fails.
 //
-// 	func Test(t *testing.T) {
+//	func Test(t *testing.T) {
 //		is := is.New(t)
 //		val := method()
 //		is.True(val != nil) // val should never be nil
@@ -129,7 +129,7 @@ func (is *I) Fail() {
 //
 // Will output:
 //
-// 	your_test.go:123: not true: val != nil
+//	your_test.go:123: not true: val != nil
 func (is *I) True(expression bool) {
 	if !expression {
 		is.log("not true: $ARGS")
@@ -138,15 +138,15 @@ func (is *I) True(expression bool) {
 
 // Equal asserts that a and b are equal.
 //
-// 	func Test(t *testing.T) {
+//	func Test(t *testing.T) {
 //		is := is.New(t)
 //		a := greet("Mat")
 //		is.Equal(a, "Hi Mat") // greeting
-// 	}
+//	}
 //
 // Will output:
 //
-// 	your_test.go:123: Hey Mat != Hi Mat // greeting
+//	your_test.go:123: Hey Mat != Hi Mat // greeting
 func (is *I) Equal(a, b interface{}) {
 	if !areEqual(a, b) {
 		if isNil(a) || isNil(b) {
@@ -173,13 +173,13 @@ func (is *I) Equal(a, b interface{}) {
 // It allows you to write subtests using a fimilar
 // pattern:
 //
-// 	func Test(t *testing.T) {
+//	func Test(t *testing.T) {
 //		is := is.New(t)
-// 		t.Run("sub", func(t *testing.T) {
-// 			is := is.New(t)
-// 			// TODO: test
-// 		})
-// 	}
+//		t.Run("sub", func(t *testing.T) {
+//			is := is.New(t)
+//			// TODO: test
+//		})
+//	}
 func (is *I) New(t *testing.T) *I {
 	return New(t)
 }
@@ -188,13 +188,13 @@ func (is *I) New(t *testing.T) *I {
 // method. It allows you to write subtests using a fimilar
 // pattern:
 //
-// 	func Test(t *testing.T) {
+//	func Test(t *testing.T) {
 //		is := is.New(t)
-// 		t.Run("sub", func(t *testing.T) {
-// 			is := is.New(t)
-// 			// TODO: test
-// 		})
-// 	}
+//		t.Run("sub", func(t *testing.T) {
+//			is := is.New(t)
+//			// TODO: test
+//		})
+//	}
 func (is *I) NewRelaxed(t *testing.T) *I {
 	return NewRelaxed(t)
 }
@@ -208,7 +208,7 @@ func (is *I) valWithType(v interface{}) string {
 
 // NoErr asserts that err is nil.
 //
-// 	func Test(t *testing.T) {
+//	func Test(t *testing.T) {
 //		is := is.New(t)
 //		val, err := getVal()
 //		is.NoErr(err)        // getVal error
@@ -217,7 +217,7 @@ func (is *I) valWithType(v interface{}) string {
 //
 // Will output:
 //
-// 	your_test.go:123: err: not found // getVal error
+//	your_test.go:123: err: not found // getVal error
 func (is *I) NoErr(err error) {
 	if err != nil {
 		is.logf("err: %s", err.Error())
@@ -246,17 +246,14 @@ func areEqual(a, b interface{}) bool {
 		if !isNil(a) && isNil(b) {
 			return false
 		}
-		return a == b
+		return true
 	}
 	if reflect.DeepEqual(a, b) {
 		return true
 	}
 	aValue := reflect.ValueOf(a)
 	bValue := reflect.ValueOf(b)
-	if aValue == bValue {
-		return true
-	}
-	return false
+	return aValue == bValue
 }
 
 func callerinfo() (path string, line int, ok bool) {
@@ -318,7 +315,7 @@ func loadArguments(path string, line int) (string, bool) {
 			text = text[braceI+1:]
 			cs := bufio.NewScanner(strings.NewReader(text))
 			cs.Split(bufio.ScanBytes)
-			i := 0
+			j := 0
 			c := 1
 			for cs.Scan() {
 				switch cs.Text() {
@@ -330,9 +327,9 @@ func loadArguments(path string, line int) (string, bool) {
 				if c == 0 {
 					break
 				}
-				i++
+				j++
 			}
-			text = text[:i]
+			text = text[:j]
 			return text, true
 		}
 		i++
