@@ -189,9 +189,9 @@ func (is *I) New(t *testing.T) *I {
 // pattern:
 //
 //	func Test(t *testing.T) {
-//		is := is.New(t)
+//		is := is.NewRelaxed(t)
 //		t.Run("sub", func(t *testing.T) {
-//			is := is.New(t)
+//			is := is.NewRelaxed(t)
 //			// TODO: test
 //		})
 //	}
