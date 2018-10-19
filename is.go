@@ -71,12 +71,10 @@ type I struct {
 	colorful bool
 }
 
-var isColorful bool
+var noColorFlag bool
 
 func init() {
-	noColor := flag.Bool("nocolor", false, "turns off colors")
-	flag.Parse()
-	isColorful = !*noColor
+	flag.BoolVar(&noColorFlag, "nocolor", false, "turns off colors")
 }
 
 // New makes a new testing helper using the specified
@@ -84,7 +82,7 @@ func init() {
 // In strict mode, failures call T.FailNow causing the test
 // to be aborted. See NewRelaxed for alternative behavior.
 func New(t T) *I {
-	return &I{t, t.FailNow, os.Stdout, isColorful}
+	return &I{t, t.FailNow, os.Stdout, !noColorFlag}
 }
 
 // NewRelaxed makes a new testing helper using the specified
@@ -92,7 +90,7 @@ func New(t T) *I {
 // In relaxed mode, failures call T.Fail allowing
 // multiple failures per test.
 func NewRelaxed(t T) *I {
-	return &I{t, t.Fail, os.Stdout, isColorful}
+	return &I{t, t.Fail, os.Stdout, !noColorFlag}
 }
 
 func (is *I) log(args ...interface{}) {
