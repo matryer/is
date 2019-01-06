@@ -107,7 +107,7 @@ func (is *I) logf(format string, args ...interface{}) {
 //
 //	func Test(t *testing.T) {
 //		is := is.New(t)
-//      is.Fail() // TODO: write this test
+//		is.Fail() // TODO: write this test
 //	}
 //
 // In relaxed mode, execution will continue after a call to
@@ -168,7 +168,7 @@ func (is *I) Equal(a, b interface{}) {
 }
 
 // New is a method wrapper around the New function.
-// It allows you to write subtests using a fimilar
+// It allows you to write subtests using a similar
 // pattern:
 //
 //	func Test(t *testing.T) {
@@ -182,8 +182,8 @@ func (is *I) New(t *testing.T) *I {
 	return New(t)
 }
 
-// NewRelaxed is a method wrapper aorund the NewRelaxed
-// method. It allows you to write subtests using a fimilar
+// NewRelaxed is a method wrapper around the NewRelaxed
+// method. It allows you to write subtests using a similar
 // pattern:
 //
 //	func Test(t *testing.T) {
@@ -210,7 +210,7 @@ func (is *I) valWithType(v interface{}) string {
 //		is := is.New(t)
 //		val, err := getVal()
 //		is.NoErr(err)        // getVal error
-//		is.OK(len(val) > 10) // val cannot be short
+//		is.True(len(val) > 10) // val cannot be short
 //	}
 //
 // Will output:
