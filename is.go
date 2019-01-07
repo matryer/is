@@ -222,6 +222,18 @@ func (is *I) NoErr(err error) {
 	}
 }
 
+// Err asserts that err is not nil.
+//
+//	func Test(t *testing.T) {
+//		is := is.New(t)
+//		is.Err(errors.New("boom")
+//	}
+func (is *I) Err(err error) {
+	if err == nil {
+		is.log("expected error, go nil")
+	}
+}
+
 // isNil gets whether the object is nil or not.
 func isNil(object interface{}) bool {
 	if object == nil {

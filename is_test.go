@@ -235,6 +235,26 @@ func TestRelaxed(t *testing.T) {
 	}
 }
 
+func TestNoErr(t *testing.T) {
+	tt := &mockT{}
+	is := NewRelaxed(tt)
+	var buf bytes.Buffer
+	is.out = &buf
+	is.colorful = false
+	is.NoErr(nil)
+	actual := buf.String()
+	if actual != "" {
+		t.Error("expected no error")
+	}
+
+	is.NoErr(errors.New("boom"))
+
+	actual = buf.String()
+	if actual == "" {
+		t.Error("expected error")
+	}
+}
+
 func TestLoadComment(t *testing.T) {
 	comment, ok := loadComment("./testdata/example_test.go", 14)
 	if !ok {
