@@ -41,6 +41,9 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
+	"go/ast"
+	"go/parser"
+	"go/token"
 	"io"
 	"os"
 	"path/filepath"
@@ -267,29 +270,33 @@ func callerinfo() (path string, line int, ok bool) {
 	}
 }
 
+func getFile(path string) (*token.FileSet, *ast.File, error) {
+	// TODO: cache fset and file
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, path, nil, parser.ParseComments)
+
+	return fset, f, err
+}
+
 // loadComment gets the Go comment from the specified line
 // in the specified file.
 func loadComment(path string, line int) (string, bool) {
-	f, err := os.Open(path)
+	fset, f, err := getFile(path)
 	if err != nil {
 		return "", false
 	}
-	defer f.Close()
-	s := bufio.NewScanner(f)
-	i := 1
-	for s.Scan() {
-		if i == line {
-			text := s.Text()
-			commentI := strings.Index(text, "//")
-			if commentI == -1 {
-				return "", false // no comment
-			}
-			text = text[commentI+2:]
-			text = strings.TrimSpace(text)
-			return text, true
+
+	for _, comment := range f.Comments {
+		pos := fset.Position(comment.Pos())
+		if !pos.IsValid() {
+			continue
 		}
-		i++
+
+		if pos.Line == line {
+			return strings.TrimSpace(comment.Text()), true
+		}
 	}
+
 	return "", false
 }
 
