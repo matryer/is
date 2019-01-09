@@ -37,11 +37,11 @@
 package is
 
 import (
-	"bufio"
 	"bytes"
 	"flag"
 	"fmt"
 	"go/ast"
+	"go/format"
 	"go/parser"
 	"go/token"
 	"io"
@@ -278,6 +278,71 @@ func getFile(path string) (*token.FileSet, *ast.File, error) {
 	return fset, f, err
 }
 
+func nodeToStr(fset *token.FileSet, node ast.Node) string {
+	var buf bytes.Buffer
+	if err := format.Node(&buf, fset, node); err != nil {
+		panic(err)
+	}
+
+	return string(buf.Bytes())
+}
+
+func getIsCallExprAtLine(fset *token.FileSet, file *ast.File, line int) *ast.CallExpr {
+	var result *ast.CallExpr
+
+	ast.Inspect(file, func(n ast.Node) bool {
+		if n == nil {
+			return false
+		}
+
+		pos := fset.Position(n.Pos())
+		if pos.Line != line {
+			return true
+		}
+
+		callExpr, ok := n.(*ast.CallExpr)
+		if !ok {
+			return true
+		}
+
+		selExpr, ok := callExpr.Fun.(*ast.SelectorExpr)
+		if !ok {
+			return true
+		}
+
+		ident, ok := selExpr.X.(*ast.Ident)
+		if !ok {
+			return true
+		}
+
+		if ident.Name != "is" {
+			return true
+		}
+
+		result = callExpr
+
+		return false
+	})
+
+	return result
+}
+func formatCallExprArgs(fset *token.FileSet, callExpr *ast.CallExpr) string {
+	selExpr, ok := callExpr.Fun.(*ast.SelectorExpr)
+	if !ok {
+		return ""
+	}
+
+	result := ""
+	if selExpr.Sel.Name == "True" {
+		// true has only one arg
+		arg := callExpr.Args[0]
+		result = nodeToStr(fset, arg)
+	}
+
+	// only true is currentley supported
+	return result
+}
+
 // loadComment gets the Go comment from the specified line
 // in the specified file.
 func loadComment(path string, line int) (string, bool) {
@@ -303,43 +368,22 @@ func loadComment(path string, line int) (string, bool) {
 // loadArguments gets the arguments from the function call
 // on the specified line of the file.
 func loadArguments(path string, line int) (string, bool) {
-	f, err := os.Open(path)
+	fset, f, err := getFile(path)
 	if err != nil {
 		return "", false
 	}
-	defer f.Close()
-	s := bufio.NewScanner(f)
-	i := 1
-	for s.Scan() {
-		if i == line {
-			text := s.Text()
-			braceI := strings.Index(text, "(")
-			if braceI == -1 {
-				return "", false
-			}
-			text = text[braceI+1:]
-			cs := bufio.NewScanner(strings.NewReader(text))
-			cs.Split(bufio.ScanBytes)
-			j := 0
-			c := 1
-			for cs.Scan() {
-				switch cs.Text() {
-				case ")":
-					c--
-				case "(":
-					c++
-				}
-				if c == 0 {
-					break
-				}
-				j++
-			}
-			text = text[:j]
-			return text, true
-		}
-		i++
+
+	callExpr := getIsCallExprAtLine(fset, f, line)
+	if callExpr == nil {
+		return "", false
 	}
-	return "", false
+
+	argStr := formatCallExprArgs(fset, callExpr)
+	if argStr == "" {
+		return "", false
+	}
+
+	return argStr, true
 }
 
 // decorate prefixes the string with the file and line of the call site
