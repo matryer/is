@@ -74,6 +74,17 @@ type I struct {
 	colorful bool
 }
 
+type CacheEntryType string
+
+const CommentCacheEntry CacheEntryType = "Comment"
+const IsCallCacheEntry CacheEntryType = "IsCall"
+
+// global fileset
+var fset = token.NewFileSet()
+
+// astCache is a map of file[CacheEntryType:linenumber[Node]]
+var astCache = make(map[string]map[string]ast.Node)
+
 var noColorFlag bool
 
 func init() {
@@ -270,35 +281,50 @@ func callerinfo() (path string, line int, ok bool) {
 	}
 }
 
-func getFile(path string) (*token.FileSet, *ast.File, error) {
-	// TODO: cache fset and file
-	fset := token.NewFileSet()
-	f, err := parser.ParseFile(fset, path, nil, parser.ParseComments)
-
-	return fset, f, err
-}
-
-func nodeToStr(fset *token.FileSet, node ast.Node) string {
-	var buf bytes.Buffer
-	if err := format.Node(&buf, fset, node); err != nil {
-		panic(err)
+func getFileCache(path string) (map[string]ast.Node, bool) {
+	file, ok := astCache[path]
+	if ok {
+		return file, false
 	}
 
-	return string(buf.Bytes())
+	result := make(map[string]ast.Node)
+	astCache[path] = result
+	return result, true
+
 }
 
-func getIsCallExprAtLine(fset *token.FileSet, file *ast.File, line int) *ast.CallExpr {
-	var result *ast.CallExpr
+func getNodeFromCache(kind CacheEntryType, path string, line int) (ast.Node, error) {
+	key := fmt.Sprintf("%s:%d", kind, line)
+	fileCache, newCacheEntry := getFileCache(path)
+	entry, ok := fileCache[key]
+	if ok {
+		return entry, nil
+	}
 
-	ast.Inspect(file, func(n ast.Node) bool {
+	if !newCacheEntry {
+		return nil, fmt.Errorf("key %s not found in cache", key)
+	}
+
+	f, err := parser.ParseFile(fset, path, nil, parser.ParseComments)
+	if err != nil {
+		return nil, err
+	}
+	for _, comment := range f.Comments {
+		pos := fset.Position(comment.Pos())
+		if !pos.IsValid() {
+			continue
+		}
+
+		key := fmt.Sprintf("%s:%d", CommentCacheEntry, pos.Line)
+		fileCache[key] = comment
+	}
+
+	ast.Inspect(f, func(n ast.Node) bool {
 		if n == nil {
 			return false
 		}
 
 		pos := fset.Position(n.Pos())
-		if pos.Line != line {
-			return true
-		}
 
 		callExpr, ok := n.(*ast.CallExpr)
 		if !ok {
@@ -319,13 +345,28 @@ func getIsCallExprAtLine(fset *token.FileSet, file *ast.File, line int) *ast.Cal
 			return true
 		}
 
-		result = callExpr
-
+		key := fmt.Sprintf("%s:%d", IsCallCacheEntry, pos.Line)
+		fileCache[key] = callExpr
 		return false
 	})
 
-	return result
+	entry, ok = fileCache[key]
+	if !ok {
+		return nil, fmt.Errorf("key %s not found in cache", key)
+	}
+
+	return entry, nil
 }
+
+func nodeToStr(fset *token.FileSet, node ast.Node) string {
+	var buf bytes.Buffer
+	if err := format.Node(&buf, fset, node); err != nil {
+		panic(err)
+	}
+
+	return string(buf.Bytes())
+}
+
 func formatCallExprArgs(fset *token.FileSet, callExpr *ast.CallExpr) string {
 	selExpr, ok := callExpr.Fun.(*ast.SelectorExpr)
 	if !ok {
@@ -346,35 +387,30 @@ func formatCallExprArgs(fset *token.FileSet, callExpr *ast.CallExpr) string {
 // loadComment gets the Go comment from the specified line
 // in the specified file.
 func loadComment(path string, line int) (string, bool) {
-	fset, f, err := getFile(path)
+	node, err := getNodeFromCache(CommentCacheEntry, path, line)
 	if err != nil {
 		return "", false
 	}
 
-	for _, comment := range f.Comments {
-		pos := fset.Position(comment.Pos())
-		if !pos.IsValid() {
-			continue
-		}
-
-		if pos.Line == line {
-			return strings.TrimSpace(comment.Text()), true
-		}
+	comment, ok := node.(*ast.CommentGroup)
+	if !ok {
+		return "", false
 	}
 
-	return "", false
+	result := strings.TrimSpace(comment.Text())
+	return result, true
 }
 
 // loadArguments gets the arguments from the function call
 // on the specified line of the file.
 func loadArguments(path string, line int) (string, bool) {
-	fset, f, err := getFile(path)
+	node, err := getNodeFromCache(IsCallCacheEntry, path, line)
 	if err != nil {
 		return "", false
 	}
 
-	callExpr := getIsCallExprAtLine(fset, f, line)
-	if callExpr == nil {
+	callExpr, ok := node.(*ast.CallExpr)
+	if !ok {
 		return "", false
 	}
 
