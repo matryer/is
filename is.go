@@ -74,10 +74,10 @@ type I struct {
 	colorful bool
 }
 
-type CacheEntryType string
+type cacheEntryType string
 
-const CommentCacheEntry CacheEntryType = "Comment"
-const IsCallCacheEntry CacheEntryType = "IsCall"
+const commentCacheEntry cacheEntryType = "Comment"
+const isCallCacheEntry cacheEntryType = "IsCall"
 
 // global fileset
 var fset = token.NewFileSet()
@@ -293,7 +293,7 @@ func getFileCache(path string) (map[string]ast.Node, bool) {
 
 }
 
-func getNodeFromCache(kind CacheEntryType, path string, line int) (ast.Node, error) {
+func getNodeFromCache(kind cacheEntryType, path string, line int) (ast.Node, error) {
 	key := fmt.Sprintf("%s:%d", kind, line)
 	fileCache, newCacheEntry := getFileCache(path)
 	entry, ok := fileCache[key]
@@ -315,7 +315,7 @@ func getNodeFromCache(kind CacheEntryType, path string, line int) (ast.Node, err
 			continue
 		}
 
-		key := fmt.Sprintf("%s:%d", CommentCacheEntry, pos.Line)
+		key := fmt.Sprintf("%s:%d", commentCacheEntry, pos.Line)
 		fileCache[key] = comment
 	}
 
@@ -345,7 +345,7 @@ func getNodeFromCache(kind CacheEntryType, path string, line int) (ast.Node, err
 			return true
 		}
 
-		key := fmt.Sprintf("%s:%d", IsCallCacheEntry, pos.Line)
+		key := fmt.Sprintf("%s:%d", isCallCacheEntry, pos.Line)
 		fileCache[key] = callExpr
 		return false
 	})
@@ -387,7 +387,7 @@ func formatCallExprArgs(fset *token.FileSet, callExpr *ast.CallExpr) string {
 // loadComment gets the Go comment from the specified line
 // in the specified file.
 func loadComment(path string, line int) (string, bool) {
-	node, err := getNodeFromCache(CommentCacheEntry, path, line)
+	node, err := getNodeFromCache(commentCacheEntry, path, line)
 	if err != nil {
 		return "", false
 	}
@@ -404,7 +404,7 @@ func loadComment(path string, line int) (string, bool) {
 // loadArguments gets the arguments from the function call
 // on the specified line of the file.
 func loadArguments(path string, line int) (string, bool) {
-	node, err := getNodeFromCache(IsCallCacheEntry, path, line)
+	node, err := getNodeFromCache(isCallCacheEntry, path, line)
 	if err != nil {
 		return "", false
 	}
