@@ -38,6 +38,7 @@ package is
 
 import (
 	"bytes"
+	"errors"
 	"flag"
 	"fmt"
 	"go/ast"
@@ -78,6 +79,8 @@ type cacheEntryType string
 
 const commentCacheEntry cacheEntryType = "Comment"
 const isCallCacheEntry cacheEntryType = "IsCall"
+
+var errNoCallerInfoFound = errors.New("could not find args")
 
 // global fileset
 var fset = token.NewFileSet()
@@ -160,26 +163,101 @@ func (is *I) True(expression bool) {
 //
 //	your_test.go:123: Hey Mat != Hi Mat // greeting
 func (is *I) Equal(a, b interface{}) {
-	if !areEqual(a, b) {
-		if isNil(a) || isNil(b) {
-			aLabel := is.valWithType(a)
-			bLabel := is.valWithType(b)
-			if isNil(a) {
-				aLabel = "<nil>"
-			}
-			if isNil(b) {
-				bLabel = "<nil>"
-			}
-			is.logf("%s != %s", aLabel, bLabel)
-			return
-		}
-		if reflect.ValueOf(a).Type() == reflect.ValueOf(b).Type() {
-			is.logf("%v != %v", a, b)
-			return
-		}
-		is.logf("%s != %s", is.valWithType(a), is.valWithType(b))
+	if areEqual(a, b) {
+		return
 	}
+
+	argNames, _ := getArgNames()
+	aName := getElementFrom(argNames, 0, "")
+	bName := getElementFrom(argNames, 1, "")
+	aType := fmt.Sprintf("%T", a)
+	bType := fmt.Sprintf("%T", b)
+	aValue := formatValue(a)
+	bValue := formatValue(b)
+
+	if !(isNil(a) || isNil(b)) && reflect.ValueOf(a).Type() != reflect.ValueOf(b).Type() {
+		aValue = fmt.Sprintf("%s(%s)", aType, aValue)
+		bValue = fmt.Sprintf("%s(%s)", bType, bValue)
+	}
+
+	if aValue != aName {
+		if is.colorful {
+			aValue = fmt.Sprintf("%s%s(%s)%s", aName, colorType, aValue, colorNormal)
+		} else {
+			aValue = fmt.Sprintf("%s(%s)", aName, aValue)
+		}
+	}
+
+	if bValue != bName {
+		if is.colorful {
+			bValue = fmt.Sprintf("%s%s(%s)%s", bName, colorType, bValue, colorNormal)
+		} else {
+			bValue = fmt.Sprintf("%s(%s)", bName, bValue)
+		}
+	}
+
+	// if bValue != bName {
+	// 	bValue = fmt.Sprintf("%s<%s>", bName, bValue)
+	// }
+
+	is.logf("%s != %s", aValue, bValue)
+
 }
+
+func formatValue(object interface{}) string {
+	if isNil(object) {
+		return "nil"
+	}
+
+	value := reflect.ValueOf(object)
+	kind := value.Kind()
+	if kind == reflect.Map {
+		buf := new(bytes.Buffer)
+		for _, mapKey := range value.MapKeys() {
+			mapVal := value.MapIndex(mapKey)
+			mapValStr := formatValue(mapVal.Interface())
+			mapKeyStr := fmt.Sprintf("%v", mapKey.Interface())
+			buf.WriteString(fmt.Sprintf("%s:%s ", mapKeyStr, mapValStr))
+		}
+
+		result := strings.TrimSpace(buf.String())
+		return result
+	}
+	if kind == reflect.Slice || kind == reflect.Array {
+		buf := new(bytes.Buffer)
+		for i := 0; i < value.Len(); i++ {
+			sliceVal := value.Index(i)
+			sliceValStr := formatValue(sliceVal.Interface())
+			buf.WriteString(fmt.Sprintf("%s ", sliceValStr))
+		}
+
+		// fullStr = fmt.Sprintf("[%s]", strings.TrimSpace(fullStr))
+		result := strings.TrimSpace(buf.String())
+		return result
+	}
+
+	return fmt.Sprint(object)
+}
+
+func getElementFrom(array []string, at int, orDefault string) string {
+	if array == nil || len(array) <= at {
+		return orDefault
+	}
+
+	result := array[at]
+	return result
+}
+
+// func nameValueLabel(allArgNames []string, argValue interface{}, argIndex int){
+// 	argValueStr := ""
+// 	if isNil(argValue) {
+// 		argValue = "nil"
+// 	}
+// 	if
+// 	if allArgNames == nil || len(allArgNames) <= argIndex{
+
+// 	}
+// }
 
 // New is a method wrapper around the New function.
 // It allows you to write subtests using a similar
@@ -218,6 +296,18 @@ func (is *I) valWithType(v interface{}) string {
 	return fmt.Sprintf("%[1]T(%[1]v)", v)
 }
 
+func findAssignStmtFromIdent(ident *ast.Ident) *ast.AssignStmt {
+	if ident.Obj == nil {
+		return nil
+	}
+	if ident.Obj.Decl == nil {
+		return nil
+	}
+
+	result := ident.Obj.Decl.(*ast.AssignStmt)
+	return result
+}
+
 // NoErr asserts that err is nil.
 //
 //	func Test(t *testing.T) {
@@ -231,9 +321,39 @@ func (is *I) valWithType(v interface{}) string {
 //
 //	your_test.go:123: err: not found // getVal error
 func (is *I) NoErr(err error) {
-	if err != nil {
-		is.logf("err: %s", err.Error())
+	if err == nil {
+		return
 	}
+
+	args, argsErr := getArgExprs()
+	if argsErr != nil || args == nil || len(args) <= 0 {
+		is.logf("%v", err)
+		return
+	}
+
+	argNames, _ := getArgNames()
+	errSrc := getElementFrom(argNames, 0, "")
+
+	argExpr := args[0]
+	errVar, ok := argExpr.(*ast.Ident)
+	if ok && errVar.Obj.Decl != nil {
+		// try to find the declaration of the err var
+		errVarAssignment := findAssignStmtFromIdent(errVar)
+		if errVarAssignment != nil {
+			errSrc = nodeToStr(fset, errVarAssignment)
+
+		}
+	}
+
+	errStr := ""
+	if is.colorful {
+		errStr = fmt.Sprintf("error: %s%s(%s)%s", formatValue(err), colorType, errSrc, colorNormal)
+	} else {
+		errStr = fmt.Sprintf("error: %s(%s)", formatValue(err), errSrc)
+	}
+
+	is.logf(errStr)
+
 }
 
 // isNil gets whether the object is nil or not.
@@ -266,6 +386,40 @@ func areEqual(a, b interface{}) bool {
 	aValue := reflect.ValueOf(a)
 	bValue := reflect.ValueOf(b)
 	return aValue == bValue
+}
+
+func getArgExprs() ([]ast.Expr, error) {
+	path, lineNumber, ok := callerinfo()
+	if !ok {
+		return nil, errNoCallerInfoFound
+	}
+
+	node, err := getNodeFromCache(isCallCacheEntry, path, lineNumber)
+	if err != nil {
+		return nil, err
+	}
+
+	callExpr, ok := node.(*ast.CallExpr)
+	if !ok {
+		return nil, fmt.Errorf("not a call expr line %d in file %s", lineNumber, path)
+	}
+
+	return callExpr.Args, nil
+}
+
+func getArgNames() ([]string, error) {
+	args, err := getArgExprs()
+	if err != nil {
+		return nil, err
+	}
+
+	result := []string{}
+	for _, arg := range args {
+		argStr := nodeToStr(fset, arg)
+		result = append(result, argStr)
+	}
+
+	return result, nil
 }
 
 func callerinfo() (path string, line int, ok bool) {

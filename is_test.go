@@ -45,14 +45,14 @@ var tests = []struct {
 		F: func(is *I) {
 			is.Equal(1, nil) // 1 doesn't equal nil
 		},
-		Fail: `int(1) != <nil> // 1 doesn't equal nil`,
+		Fail: `1 != nil // 1 doesn't equal nil`,
 	},
 	{
 		N: "Equal(nil, 2)",
 		F: func(is *I) {
 			is.Equal(nil, 2) // nil doesn't equal 2
 		},
-		Fail: `<nil> != int(2) // nil doesn't equal 2`,
+		Fail: `nil != 2 // nil doesn't equal 2`,
 	},
 	{
 		N: "Equal(false, false)",
@@ -75,7 +75,7 @@ var tests = []struct {
 			m2 := map[string]interface{}{"value": 2}
 			is.Equal(m1, m2) // maps
 		},
-		Fail: `map[value:1] != map[value:2] // maps`,
+		Fail: `m1(value:1) != m2(value:2) // maps`,
 	},
 	{
 		N: "Equal(true, map2)",
@@ -84,7 +84,7 @@ var tests = []struct {
 			m2 := map[string]interface{}{"value": 2}
 			is.Equal(m1, m2) // maps
 		},
-		Fail: `map[value:1] != map[value:2] // maps`,
+		Fail: `m1(value:1) != m2(value:2) // maps`,
 	},
 	{
 		N: "Equal(slice1, slice2)",
@@ -93,7 +93,7 @@ var tests = []struct {
 			s2 := []string{"one", "two", "three", "four"}
 			is.Equal(s1, s2) // slices
 		},
-		Fail: `[one two three] != [one two three four] // slices`,
+		Fail: `s1(one two three) != s2(one two three four) // slices`,
 	},
 	{
 		N: "Equal(nil, chan)",
@@ -162,10 +162,22 @@ var tests = []struct {
 	{
 		N: "NoErr(error)",
 		F: func(is *I) {
-			err := errors.New("nope")
+			mineBitcoins := func() (int, error) {
+				return 0, errors.New("mining failed")
+			}
+
+			coins, err := mineBitcoins()
 			is.NoErr(err) // method shouldn't return error
+			is.Equal(coins, 0)
 		},
-		Fail: "err: nope // method shouldn't return error",
+		Fail: "error: mining failed(coins, err := mineBitcoins()) // method shouldn't return error",
+	},
+	{
+		N: "NoErr(error)",
+		F: func(is *I) {
+			is.NoErr(errors.New("nope")) // method shouldn't return error
+		},
+		Fail: "error: nope(errors.New(\"nope\")) // method shouldn't return error",
 	},
 
 	// OK
