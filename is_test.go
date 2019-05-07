@@ -141,10 +141,10 @@ var tests = []struct {
 		Fail: ``,
 	},
 	{
-		N: `Equal("20%", "0.2")`,
+		N: `Equal("20% VAT", "0.2 VAT")`,
 		F: func(is *I) {
-			s1 := "20%"
-			s2 := "0.2"
+			s1 := "20% VAT"
+			s2 := "0.2 VAT"
 			is.Equal(s1, s2) // strings
 		},
 		Fail: ` // strings`,
@@ -293,9 +293,9 @@ func TestFormatStringEscape(t *testing.T) {
 	is := NewRelaxed(tt)
 	var buf bytes.Buffer
 	is.out = &buf
-	is.Equal("20%", "0.2")
+	is.Equal("20% VAT", "0.2 VAT")
 	actual := buf.String()
-	if strings.Contains(actual, `(MISSING)`) {
-		t.Errorf("string value was not escaped correctly")
+	if strings.Contains(actual, `%!V`) {
+		t.Errorf("string value was not escaped correctly: %s", actual)
 	}
 }
