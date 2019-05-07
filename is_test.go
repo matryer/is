@@ -276,3 +276,17 @@ func TestSubtests(t *testing.T) {
 		is.Equal(1+1, 2)
 	})
 }
+
+// TestArgumentsEscape ensures strings are correctly escaped before printing.
+// https://github.com/matryer/is/issues/27
+func TestFormatStringEscape(t *testing.T) {
+	tt := &mockT{}
+	is := NewRelaxed(tt)
+	var buf bytes.Buffer
+	is.out = &buf
+	is.Equal("20%", "0.2")
+	actual := buf.String()
+	if strings.Contains(actual, `(MISSING)`) {
+		t.Errorf("string value was not escaped correctly")
+	}
+}

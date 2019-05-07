@@ -362,6 +362,10 @@ func (is *I) decorate(s string) string {
 	if is.colorful {
 		buf.WriteString(colorNormal)
 	}
+
+	// escape literal '%'s to prevent string formatting issues
+	s = strings.Replace(s, "%", "%%", -1)
+
 	lines := strings.Split(s, "\n")
 	if l := len(lines); l > 1 && lines[l-1] == "" {
 		lines = lines[:l-1]
