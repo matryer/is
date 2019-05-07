@@ -140,6 +140,15 @@ var tests = []struct {
 		},
 		Fail: ``,
 	},
+	{
+		N: `Equal("20%", "0.2")`,
+		F: func(is *I) {
+			s1 := "20%"
+			s2 := "0.2"
+			is.Equal(s1, s2) // strings
+		},
+		Fail: ` // strings`,
+	},
 
 	// Fail
 	{
