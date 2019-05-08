@@ -293,9 +293,9 @@ func TestFormatStringEscape(t *testing.T) {
 	is := NewRelaxed(tt)
 	var buf bytes.Buffer
 	is.out = &buf
-	is.Equal("20% VAT", "0.2 VAT")
+	is.Equal("20% VAT", "0.2 VAT") // % symbol should be correctly printed
 	actual := buf.String()
-	if strings.Contains(actual, `%!V`) {
-		t.Errorf("string value was not escaped correctly: %s", actual)
+	if strings.Contains(actual, `%!`) {
+		t.Errorf("string was not escaped correctly: %s", actual)
 	}
 }
