@@ -140,6 +140,15 @@ var tests = []struct {
 		},
 		Fail: ``,
 	},
+	{
+		N: `Equal("20% VAT", "0.2 VAT")`,
+		F: func(is *I) {
+			s1 := "20% VAT"
+			s2 := "0.2 VAT"
+			is.Equal(s1, s2) // strings
+		},
+		Fail: ` // strings`,
+	},
 
 	// Fail
 	{
@@ -275,4 +284,18 @@ func TestSubtests(t *testing.T) {
 		is := New(t)
 		is.Equal(1+1, 2)
 	})
+}
+
+// TestArgumentsEscape ensures strings are correctly escaped before printing.
+// https://github.com/matryer/is/issues/27
+func TestFormatStringEscape(t *testing.T) {
+	tt := &mockT{}
+	is := NewRelaxed(tt)
+	var buf bytes.Buffer
+	is.out = &buf
+	is.Equal("20% VAT", "0.2 VAT") // % symbol should be correctly printed
+	actual := buf.String()
+	if strings.Contains(actual, `%!`) {
+		t.Errorf("string was not escaped correctly: %s", actual)
+	}
 }

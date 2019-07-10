@@ -362,6 +362,9 @@ func (is *I) decorate(s string) string {
 	if is.colorful {
 		buf.WriteString(colorNormal)
 	}
+
+	s = escapeFormatString(s)
+
 	lines := strings.Split(s, "\n")
 	if l := len(lines); l > 1 && lines[l-1] == "" {
 		lines = lines[:l-1]
@@ -384,6 +387,7 @@ func (is *I) decorate(s string) string {
 			buf.WriteString(colorComment)
 		}
 		buf.WriteString(" // ")
+		comment = escapeFormatString(comment)
 		buf.WriteString(comment)
 		if is.colorful {
 			buf.WriteString(colorNormal)
@@ -391,6 +395,11 @@ func (is *I) decorate(s string) string {
 	}
 	buf.WriteString("\n")
 	return buf.String()
+}
+
+// escapeFormatString escapes strings for use in formatted functions like Sprintf.
+func escapeFormatString(fmt string) string {
+	return strings.Replace(fmt, "%", "%%", -1)
 }
 
 const (
