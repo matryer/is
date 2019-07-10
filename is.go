@@ -271,7 +271,7 @@ func loadComment(path string, line int) (string, bool) {
 	for s.Scan() {
 		if i == line {
 			text := s.Text()
-			commentI := strings.Index(text, "//")
+			commentI := strings.Index(text, "// ")
 			if commentI == -1 {
 				return "", false // no comment
 			}
