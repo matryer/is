@@ -146,23 +146,14 @@ func (is *I) True(expression bool) {
 //
 //	your_test.go:123: Hey Mat != Hi Mat // greeting
 func (is *I) Equal(a, b interface{}) {
-	if !areEqual(a, b) {
-		if isNil(a) || isNil(b) {
-			aLabel := is.valWithType(a)
-			bLabel := is.valWithType(b)
-			if isNil(a) {
-				aLabel = "<nil>"
-			}
-			if isNil(b) {
-				bLabel = "<nil>"
-			}
-			is.logf("%s != %s", aLabel, bLabel)
-			return
-		}
-		if reflect.ValueOf(a).Type() == reflect.ValueOf(b).Type() {
-			is.logf("%v != %v", a, b)
-			return
-		}
+	if areEqual(a, b) {
+		return
+	}
+	if isNil(a) || isNil(b) {
+		is.logf("%s != %s", is.valWithType(a), is.valWithType(b))
+	} else if reflect.ValueOf(a).Type() == reflect.ValueOf(b).Type() {
+		is.logf("%v != %v", a, b)
+	} else {
 		is.logf("%s != %s", is.valWithType(a), is.valWithType(b))
 	}
 }
@@ -198,6 +189,9 @@ func (is *I) NewRelaxed(t *testing.T) *I {
 }
 
 func (is *I) valWithType(v interface{}) string {
+	if isNil(v) {
+		return "<nil>"
+	}
 	if is.colorful {
 		return fmt.Sprintf("%[1]s%[3]T(%[2]s%[3]v%[1]s)%[2]s", colorType, colorNormal, v)
 	}
@@ -237,14 +231,11 @@ func isNil(object interface{}) bool {
 
 // areEqual gets whether a equals b or not.
 func areEqual(a, b interface{}) bool {
-	if isNil(a) || isNil(b) {
-		if isNil(a) && !isNil(b) {
-			return false
-		}
-		if !isNil(a) && isNil(b) {
-			return false
-		}
+	if isNil(a) && isNil(b) {
 		return true
+	}
+	if isNil(a) || isNil(b) {
+		return false
 	}
 	if reflect.DeepEqual(a, b) {
 		return true
