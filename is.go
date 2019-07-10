@@ -37,10 +37,14 @@
 package is
 
 import (
-	"bufio"
 	"bytes"
+	"errors"
 	"flag"
 	"fmt"
+	"go/ast"
+	"go/format"
+	"go/parser"
+	"go/token"
 	"io"
 	"os"
 	"path/filepath"
@@ -70,6 +74,19 @@ type I struct {
 	out      io.Writer
 	colorful bool
 }
+
+type cacheEntryType string
+
+const commentCacheEntry cacheEntryType = "Comment"
+const isCallCacheEntry cacheEntryType = "IsCall"
+
+var errNoCallerInfoFound = errors.New("could not find args")
+
+// global fileset
+var fset = token.NewFileSet()
+
+// astCache is a map of file[CacheEntryType:linenumber[Node]]
+var astCache = make(map[string]map[string]ast.Node)
 
 var noColorFlag bool
 
@@ -146,26 +163,101 @@ func (is *I) True(expression bool) {
 //
 //	your_test.go:123: Hey Mat != Hi Mat // greeting
 func (is *I) Equal(a, b interface{}) {
-	if !areEqual(a, b) {
-		if isNil(a) || isNil(b) {
-			aLabel := is.valWithType(a)
-			bLabel := is.valWithType(b)
-			if isNil(a) {
-				aLabel = "<nil>"
-			}
-			if isNil(b) {
-				bLabel = "<nil>"
-			}
-			is.logf("%s != %s", aLabel, bLabel)
-			return
-		}
-		if reflect.ValueOf(a).Type() == reflect.ValueOf(b).Type() {
-			is.logf("%v != %v", a, b)
-			return
-		}
-		is.logf("%s != %s", is.valWithType(a), is.valWithType(b))
+	if areEqual(a, b) {
+		return
 	}
+
+	argNames, _ := getArgNames()
+	aName := getElementFrom(argNames, 0, "")
+	bName := getElementFrom(argNames, 1, "")
+	aType := fmt.Sprintf("%T", a)
+	bType := fmt.Sprintf("%T", b)
+	aValue := formatValue(a)
+	bValue := formatValue(b)
+
+	if !(isNil(a) || isNil(b)) && reflect.ValueOf(a).Type() != reflect.ValueOf(b).Type() {
+		aValue = fmt.Sprintf("%s(%s)", aType, aValue)
+		bValue = fmt.Sprintf("%s(%s)", bType, bValue)
+	}
+
+	if aValue != aName {
+		if is.colorful {
+			aValue = fmt.Sprintf("%s%s(%s)%s", aName, colorType, aValue, colorNormal)
+		} else {
+			aValue = fmt.Sprintf("%s(%s)", aName, aValue)
+		}
+	}
+
+	if bValue != bName {
+		if is.colorful {
+			bValue = fmt.Sprintf("%s%s(%s)%s", bName, colorType, bValue, colorNormal)
+		} else {
+			bValue = fmt.Sprintf("%s(%s)", bName, bValue)
+		}
+	}
+
+	// if bValue != bName {
+	// 	bValue = fmt.Sprintf("%s<%s>", bName, bValue)
+	// }
+
+	is.logf("%s != %s", aValue, bValue)
+
 }
+
+func formatValue(object interface{}) string {
+	if isNil(object) {
+		return "nil"
+	}
+
+	value := reflect.ValueOf(object)
+	kind := value.Kind()
+	if kind == reflect.Map {
+		buf := new(bytes.Buffer)
+		for _, mapKey := range value.MapKeys() {
+			mapVal := value.MapIndex(mapKey)
+			mapValStr := formatValue(mapVal.Interface())
+			mapKeyStr := fmt.Sprintf("%v", mapKey.Interface())
+			buf.WriteString(fmt.Sprintf("%s:%s ", mapKeyStr, mapValStr))
+		}
+
+		result := strings.TrimSpace(buf.String())
+		return result
+	}
+	if kind == reflect.Slice || kind == reflect.Array {
+		buf := new(bytes.Buffer)
+		for i := 0; i < value.Len(); i++ {
+			sliceVal := value.Index(i)
+			sliceValStr := formatValue(sliceVal.Interface())
+			buf.WriteString(fmt.Sprintf("%s ", sliceValStr))
+		}
+
+		// fullStr = fmt.Sprintf("[%s]", strings.TrimSpace(fullStr))
+		result := strings.TrimSpace(buf.String())
+		return result
+	}
+
+	return fmt.Sprint(object)
+}
+
+func getElementFrom(array []string, at int, orDefault string) string {
+	if array == nil || len(array) <= at {
+		return orDefault
+	}
+
+	result := array[at]
+	return result
+}
+
+// func nameValueLabel(allArgNames []string, argValue interface{}, argIndex int){
+// 	argValueStr := ""
+// 	if isNil(argValue) {
+// 		argValue = "nil"
+// 	}
+// 	if
+// 	if allArgNames == nil || len(allArgNames) <= argIndex{
+
+// 	}
+// }
 
 // New is a method wrapper around the New function.
 // It allows you to write subtests using a similar
@@ -204,6 +296,18 @@ func (is *I) valWithType(v interface{}) string {
 	return fmt.Sprintf("%[1]T(%[1]v)", v)
 }
 
+func findAssignStmtFromIdent(ident *ast.Ident) *ast.AssignStmt {
+	if ident.Obj == nil {
+		return nil
+	}
+	if ident.Obj.Decl == nil {
+		return nil
+	}
+
+	result := ident.Obj.Decl.(*ast.AssignStmt)
+	return result
+}
+
 // NoErr asserts that err is nil.
 //
 //	func Test(t *testing.T) {
@@ -217,9 +321,39 @@ func (is *I) valWithType(v interface{}) string {
 //
 //	your_test.go:123: err: not found // getVal error
 func (is *I) NoErr(err error) {
-	if err != nil {
-		is.logf("err: %s", err.Error())
+	if err == nil {
+		return
 	}
+
+	args, argsErr := getArgExprs()
+	if argsErr != nil || args == nil || len(args) <= 0 {
+		is.logf("%v", err)
+		return
+	}
+
+	argNames, _ := getArgNames()
+	errSrc := getElementFrom(argNames, 0, "")
+
+	argExpr := args[0]
+	errVar, ok := argExpr.(*ast.Ident)
+	if ok && errVar.Obj.Decl != nil {
+		// try to find the declaration of the err var
+		errVarAssignment := findAssignStmtFromIdent(errVar)
+		if errVarAssignment != nil {
+			errSrc = nodeToStr(fset, errVarAssignment)
+
+		}
+	}
+
+	errStr := ""
+	if is.colorful {
+		errStr = fmt.Sprintf("error: %s%s(%s)%s", formatValue(err), colorType, errSrc, colorNormal)
+	} else {
+		errStr = fmt.Sprintf("error: %s(%s)", formatValue(err), errSrc)
+	}
+
+	is.logf(errStr)
+
 }
 
 // isNil gets whether the object is nil or not.
@@ -254,6 +388,40 @@ func areEqual(a, b interface{}) bool {
 	return aValue == bValue
 }
 
+func getArgExprs() ([]ast.Expr, error) {
+	path, lineNumber, ok := callerinfo()
+	if !ok {
+		return nil, errNoCallerInfoFound
+	}
+
+	node, err := getNodeFromCache(isCallCacheEntry, path, lineNumber)
+	if err != nil {
+		return nil, err
+	}
+
+	callExpr, ok := node.(*ast.CallExpr)
+	if !ok {
+		return nil, fmt.Errorf("not a call expr line %d in file %s", lineNumber, path)
+	}
+
+	return callExpr.Args, nil
+}
+
+func getArgNames() ([]string, error) {
+	args, err := getArgExprs()
+	if err != nil {
+		return nil, err
+	}
+
+	result := []string{}
+	for _, arg := range args {
+		argStr := nodeToStr(fset, arg)
+		result = append(result, argStr)
+	}
+
+	return result, nil
+}
+
 func callerinfo() (path string, line int, ok bool) {
 	for i := 0; ; i++ {
 		_, path, line, ok = runtime.Caller(i)
@@ -267,72 +435,145 @@ func callerinfo() (path string, line int, ok bool) {
 	}
 }
 
+func getFileCache(path string) (map[string]ast.Node, bool) {
+	file, ok := astCache[path]
+	if ok {
+		return file, false
+	}
+
+	result := make(map[string]ast.Node)
+	astCache[path] = result
+	return result, true
+
+}
+
+func getNodeFromCache(kind cacheEntryType, path string, line int) (ast.Node, error) {
+	key := fmt.Sprintf("%s:%d", kind, line)
+	fileCache, newCacheEntry := getFileCache(path)
+	entry, ok := fileCache[key]
+	if ok {
+		return entry, nil
+	}
+
+	if !newCacheEntry {
+		return nil, fmt.Errorf("key %s not found in cache", key)
+	}
+
+	f, err := parser.ParseFile(fset, path, nil, parser.ParseComments)
+	if err != nil {
+		return nil, err
+	}
+	for _, comment := range f.Comments {
+		pos := fset.Position(comment.Pos())
+		if !pos.IsValid() {
+			continue
+		}
+
+		key := fmt.Sprintf("%s:%d", commentCacheEntry, pos.Line)
+		fileCache[key] = comment
+	}
+
+	ast.Inspect(f, func(n ast.Node) bool {
+		if n == nil {
+			return false
+		}
+
+		pos := fset.Position(n.Pos())
+
+		callExpr, ok := n.(*ast.CallExpr)
+		if !ok {
+			return true
+		}
+
+		selExpr, ok := callExpr.Fun.(*ast.SelectorExpr)
+		if !ok {
+			return true
+		}
+
+		ident, ok := selExpr.X.(*ast.Ident)
+		if !ok {
+			return true
+		}
+
+		if ident.Name != "is" {
+			return true
+		}
+
+		key := fmt.Sprintf("%s:%d", isCallCacheEntry, pos.Line)
+		fileCache[key] = callExpr
+		return false
+	})
+
+	entry, ok = fileCache[key]
+	if !ok {
+		return nil, fmt.Errorf("key %s not found in cache", key)
+	}
+
+	return entry, nil
+}
+
+func nodeToStr(fset *token.FileSet, node ast.Node) string {
+	var buf bytes.Buffer
+	if err := format.Node(&buf, fset, node); err != nil {
+		panic(err)
+	}
+
+	return string(buf.Bytes())
+}
+
+func formatCallExprArgs(fset *token.FileSet, callExpr *ast.CallExpr) string {
+	selExpr, ok := callExpr.Fun.(*ast.SelectorExpr)
+	if !ok {
+		return ""
+	}
+
+	result := ""
+	if selExpr.Sel.Name == "True" {
+		// true has only one arg
+		arg := callExpr.Args[0]
+		result = nodeToStr(fset, arg)
+	}
+
+	// only true is currentley supported
+	return result
+}
+
 // loadComment gets the Go comment from the specified line
 // in the specified file.
 func loadComment(path string, line int) (string, bool) {
-	f, err := os.Open(path)
+	node, err := getNodeFromCache(commentCacheEntry, path, line)
 	if err != nil {
 		return "", false
 	}
-	defer f.Close()
-	s := bufio.NewScanner(f)
-	i := 1
-	for s.Scan() {
-		if i == line {
-			text := s.Text()
-			commentI := strings.Index(text, "//")
-			if commentI == -1 {
-				return "", false // no comment
-			}
-			text = text[commentI+2:]
-			text = strings.TrimSpace(text)
-			return text, true
-		}
-		i++
+
+	comment, ok := node.(*ast.CommentGroup)
+	if !ok {
+		return "", false
 	}
-	return "", false
+
+	result := strings.TrimSpace(comment.Text())
+	return result, true
 }
 
 // loadArguments gets the arguments from the function call
 // on the specified line of the file.
 func loadArguments(path string, line int) (string, bool) {
-	f, err := os.Open(path)
+	node, err := getNodeFromCache(isCallCacheEntry, path, line)
 	if err != nil {
 		return "", false
 	}
-	defer f.Close()
-	s := bufio.NewScanner(f)
-	i := 1
-	for s.Scan() {
-		if i == line {
-			text := s.Text()
-			braceI := strings.Index(text, "(")
-			if braceI == -1 {
-				return "", false
-			}
-			text = text[braceI+1:]
-			cs := bufio.NewScanner(strings.NewReader(text))
-			cs.Split(bufio.ScanBytes)
-			j := 0
-			c := 1
-			for cs.Scan() {
-				switch cs.Text() {
-				case ")":
-					c--
-				case "(":
-					c++
-				}
-				if c == 0 {
-					break
-				}
-				j++
-			}
-			text = text[:j]
-			return text, true
-		}
-		i++
+
+	callExpr, ok := node.(*ast.CallExpr)
+	if !ok {
+		return "", false
 	}
-	return "", false
+
+	argStr := formatCallExprArgs(fset, callExpr)
+	if argStr == "" {
+		return "", false
+	}
+
+	return argStr, true
 }
 
 // decorate prefixes the string with the file and line of the call site
