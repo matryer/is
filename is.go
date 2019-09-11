@@ -74,7 +74,8 @@ type I struct {
 var noColorFlag bool
 
 func init() {
-	flag.BoolVar(&noColorFlag, "nocolor", false, "turns off colors")
+	colorEnv := os.Getenv("IS_NO_COLOR") != "false"
+	flag.BoolVar(&noColorFlag, "nocolor", colorEnv, "turns off colors")
 }
 
 // New makes a new testing helper using the specified
