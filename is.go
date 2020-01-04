@@ -69,6 +69,8 @@ type I struct {
 	fail     func()
 	out      io.Writer
 	colorful bool
+
+	helpers map[string]struct{} // functions to be skipped when writing file/line info
 }
 
 var noColorFlag bool
@@ -83,7 +85,7 @@ func init() {
 // In strict mode, failures call T.FailNow causing the test
 // to be aborted. See NewRelaxed for alternative behavior.
 func New(t T) *I {
-	return &I{t, t.FailNow, os.Stdout, !noColorFlag}
+	return &I{t, t.FailNow, os.Stdout, !noColorFlag, map[string]struct{}{}}
 }
 
 // NewRelaxed makes a new testing helper using the specified
@@ -91,7 +93,7 @@ func New(t T) *I {
 // In relaxed mode, failures call T.Fail allowing
 // multiple failures per test.
 func NewRelaxed(t T) *I {
-	return &I{t, t.Fail, os.Stdout, !noColorFlag}
+	return &I{t, t.Fail, os.Stdout, !noColorFlag, map[string]struct{}{}}
 }
 
 func (is *I) log(args ...interface{}) {
@@ -189,6 +191,12 @@ func (is *I) NewRelaxed(t *testing.T) *I {
 	return NewRelaxed(t)
 }
 
+// Helper marks the calling function as a test helper function.
+// When printing file and line information, that function will be skipped.
+func (is *I) Helper() {
+	is.helpers[callerName(1)] = struct{}{}
+}
+
 func (is *I) valWithType(v interface{}) string {
 	if isNil(v) {
 		return "<nil>"
@@ -246,17 +254,50 @@ func areEqual(a, b interface{}) bool {
 	return aValue == bValue
 }
 
-func callerinfo() (path string, line int, ok bool) {
-	for i := 0; ; i++ {
-		_, path, line, ok = runtime.Caller(i)
-		if !ok {
-			return
-		}
-		if strings.HasSuffix(path, "is.go") {
+// callerName gives the function name (qualified with a package path)
+// for the caller after skip frames (where 0 means the current function).
+func callerName(skip int) string {
+	// Make room for the skip PC.
+	var pc [1]uintptr
+	n := runtime.Callers(skip+2, pc[:]) // skip + runtime.Callers + callerName
+	if n == 0 {
+		panic("is: zero callers found")
+	}
+	frames := runtime.CallersFrames(pc[:n])
+	frame, _ := frames.Next()
+	return frame.Function
+}
+
+// The maximum number of stack frames to go through when skipping helper functions for
+// the purpose of decorating log messages.
+const maxStackLen = 50
+
+func (is *I) callerinfo() (path string, line int, ok bool) {
+	var pc [maxStackLen]uintptr
+	// Skip two extra frames to account for this function
+	// and runtime.Callers itself.
+	n := runtime.Callers(2, pc[:])
+	if n == 0 {
+		panic("is: zero callers found")
+	}
+	frames := runtime.CallersFrames(pc[:n])
+	var firstFrame, frame runtime.Frame
+	for more := true; more; {
+		frame, more = frames.Next()
+		if strings.HasSuffix(frame.File, "is.go") {
 			continue
 		}
-		return path, line, true
+		if firstFrame.PC == 0 {
+			firstFrame = frame
+		}
+		if _, ok := is.helpers[frame.Function]; ok {
+			// Frame is inside a helper function.
+			continue
+		}
+		return frame.File, frame.Line, true
 	}
+	// If no "non-helper" frame is found, the first non is frame is returned.
+	return firstFrame.File, firstFrame.Line, true
 }
 
 // loadComment gets the Go comment from the specified line
@@ -331,7 +372,7 @@ func loadArguments(path string, line int) (string, bool) {
 // and inserts the final newline if needed and indentation tabs for formatting.
 // this function was copied from the testing framework and modified.
 func (is *I) decorate(s string) string {
-	path, lineNumber, ok := callerinfo() // decorate + log + public function.
+	path, lineNumber, ok := is.callerinfo() // decorate + log + public function.
 	file := filepath.Base(path)
 	if ok {
 		// Truncate file name at last file name separator.
