@@ -45,7 +45,6 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
-	"runtime"
 	"strings"
 	"testing"
 )
@@ -69,6 +68,8 @@ type I struct {
 	fail     func()
 	out      io.Writer
 	colorful bool
+
+	helpers map[string]struct{} // functions to be skipped when writing file/line info
 }
 
 var noColorFlag bool
@@ -83,7 +84,7 @@ func init() {
 // In strict mode, failures call T.FailNow causing the test
 // to be aborted. See NewRelaxed for alternative behavior.
 func New(t T) *I {
-	return &I{t, t.FailNow, os.Stdout, !noColorFlag}
+	return &I{t, t.FailNow, os.Stdout, !noColorFlag, map[string]struct{}{}}
 }
 
 // NewRelaxed makes a new testing helper using the specified
@@ -91,7 +92,7 @@ func New(t T) *I {
 // In relaxed mode, failures call T.Fail allowing
 // multiple failures per test.
 func NewRelaxed(t T) *I {
-	return &I{t, t.Fail, os.Stdout, !noColorFlag}
+	return &I{t, t.Fail, os.Stdout, !noColorFlag, map[string]struct{}{}}
 }
 
 func (is *I) log(args ...interface{}) {
@@ -246,19 +247,6 @@ func areEqual(a, b interface{}) bool {
 	return aValue == bValue
 }
 
-func callerinfo() (path string, line int, ok bool) {
-	for i := 0; ; i++ {
-		_, path, line, ok = runtime.Caller(i)
-		if !ok {
-			return
-		}
-		if strings.HasSuffix(path, "is.go") {
-			continue
-		}
-		return path, line, true
-	}
-}
-
 // loadComment gets the Go comment from the specified line
 // in the specified file.
 func loadComment(path string, line int) (string, bool) {
@@ -331,7 +319,7 @@ func loadArguments(path string, line int) (string, bool) {
 // and inserts the final newline if needed and indentation tabs for formatting.
 // this function was copied from the testing framework and modified.
 func (is *I) decorate(s string) string {
-	path, lineNumber, ok := callerinfo() // decorate + log + public function.
+	path, lineNumber, ok := is.callerinfo() // decorate + log + public function.
 	file := filepath.Base(path)
 	if ok {
 		// Truncate file name at last file name separator.
