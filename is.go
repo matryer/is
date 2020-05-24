@@ -384,7 +384,7 @@ func escapeFormatString(fmt string) string {
 
 const (
 	colorNormal  = "\u001b[39m"
-	colorComment = "\u001b[32m"
+	colorComment = "\u001b[31m"
 	colorFile    = "\u001b[90m"
 	colorType    = "\u001b[90m"
 )
