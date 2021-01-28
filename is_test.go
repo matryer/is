@@ -28,7 +28,7 @@ var tests = []struct {
 	{
 		N: "Equal(1, 1)",
 		F: func(is *I) {
-			is.Equal(1, 1) // 1 doesn't equal 2
+			is.Equal(1, 1) // 1 doesn't equal 1
 		},
 		Fail: ``,
 	},
@@ -57,7 +57,7 @@ var tests = []struct {
 	{
 		N: "Equal(false, false)",
 		F: func(is *I) {
-			is.Equal(false, false) // nil doesn't equal 2
+			is.Equal(false, false) // false doesn't equal false
 		},
 		Fail: ``,
 	},
@@ -78,13 +78,12 @@ var tests = []struct {
 		Fail: `map[value:1] != map[value:2] // maps`,
 	},
 	{
-		N: "Equal(true, map2)",
+		N: "Equal(true, map)",
 		F: func(is *I) {
-			m1 := map[string]interface{}{"value": 1}
-			m2 := map[string]interface{}{"value": 2}
-			is.Equal(m1, m2) // maps
+			m := map[string]interface{}{"value": 2}
+			is.Equal(true, m) // maps
 		},
-		Fail: `map[value:1] != map[value:2] // maps`,
+		Fail: `bool(true) != map[string]interface {}(map[value:2]) // maps`,
 	},
 	{
 		N: "Equal(slice1, slice2)",
@@ -111,7 +110,7 @@ var tests = []struct {
 			s2 := []string{"one", "two", "three", "four"}
 			is.Equal(s1, s2) // nil slice
 		},
-		Fail: ` // nil slice`,
+		Fail: `<nil> != []string([one two three four]) // nil slice`,
 	},
 	{
 		N: "Equal(nil, nil)",
@@ -129,7 +128,7 @@ var tests = []struct {
 			m2 := map[string]string{}
 			is.Equal(m1, m2) // nil map
 		},
-		Fail: ` // nil map`,
+		Fail: `<nil> != map[string]string(map[]) // nil map`,
 	},
 	{
 		N: "Equal(nil, nil)",
@@ -147,7 +146,7 @@ var tests = []struct {
 			s2 := "0.2 VAT"
 			is.Equal(s1, s2) // strings
 		},
-		Fail: ` // strings`,
+		Fail: `20% VAT != 0.2 VAT // strings`,
 	},
 
 	// Fail
@@ -177,7 +176,7 @@ var tests = []struct {
 		Fail: "err: nope // method shouldn't return error",
 	},
 
-	// OK
+	// True
 	{
 		N: "True(1 == 2)",
 		F: func(is *I) {
