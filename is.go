@@ -171,7 +171,7 @@ func (is *I) Equal(a, b interface{}) {
 //			// TODO: test
 //		})
 //	}
-func (is *I) New(t *testing.T) *I {
+func (is *I) New(t T) *I {
 	return New(t)
 }
 
