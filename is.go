@@ -46,7 +46,6 @@ import (
 	"path/filepath"
 	"reflect"
 	"strings"
-	"testing"
 )
 
 // T reports when failures occur.
@@ -186,7 +185,7 @@ func (is *I) New(t T) *I {
 //			// TODO: test
 //		})
 //	}
-func (is *I) NewRelaxed(t *testing.T) *I {
+func (is *I) NewRelaxed(t T) *I {
 	return NewRelaxed(t)
 }
 
