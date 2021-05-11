@@ -33,7 +33,7 @@ func callerName(skip int) string {
 // the purpose of decorating log messages.
 const maxStackLen = 50
 
-var reIsSourceFile = regexp.MustCompile("is(-1.7)?\\.go$")
+var reIsSourceFile = regexp.MustCompile(`is(-1.7)?\.go$`)
 
 func (is *I) callerinfo() (path string, line int, ok bool) {
 	var pc [maxStackLen]uintptr
