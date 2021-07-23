@@ -31,12 +31,13 @@ func Test(t *testing.T) {
 
 ## Color
 
-To turn off the colors, run `go test` with the `-nocolor` flag, or with the env var `IS_NO_COLOR=true`.
+To turn off the colors, run `go test` with the `-nocolor` flag,
+or with the env var [`NO_COLOR` (with any value)](https://no-color.org).
 
 ```
 go test -nocolor
 ```
 
 ```
-IS_NO_COLOR=true go test
+NO_COLOR=1 go test
 ```
