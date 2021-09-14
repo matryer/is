@@ -46,7 +46,6 @@ import (
 	"path/filepath"
 	"reflect"
 	"strings"
-	"testing"
 )
 
 // T reports when failures occur.
@@ -171,7 +170,7 @@ func (is *I) Equal(a, b interface{}) {
 //			// TODO: test
 //		})
 //	}
-func (is *I) New(t *testing.T) *I {
+func (is *I) New(t T) *I {
 	return New(t)
 }
 
@@ -186,7 +185,7 @@ func (is *I) New(t *testing.T) *I {
 //			// TODO: test
 //		})
 //	}
-func (is *I) NewRelaxed(t *testing.T) *I {
+func (is *I) NewRelaxed(t T) *I {
 	return NewRelaxed(t)
 }
 
