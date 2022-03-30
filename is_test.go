@@ -21,130 +21,130 @@ func (m *mockT) Fail() {
 
 var tests = []struct {
 	N    string
-	F    func(is *I)
+	F    func(is *I) bool
 	Fail string
 }{
 	// Equal
 	{
 		N: "Equal(1, 1)",
-		F: func(is *I) {
-			is.Equal(1, 1) // 1 doesn't equal 1
+		F: func(is *I) bool {
+			return is.Equal(1, 1) // 1 doesn't equal 1
 		},
 		Fail: ``,
 	},
 
 	{
 		N: "Equal(1, 2)",
-		F: func(is *I) {
-			is.Equal(1, 2) // 1 doesn't equal 2
+		F: func(is *I) bool {
+			return is.Equal(1, 2) // 1 doesn't equal 2
 		},
 		Fail: `1 != 2 // 1 doesn't equal 2`,
 	},
 	{
 		N: "Equal(1, nil)",
-		F: func(is *I) {
-			is.Equal(1, nil) // 1 doesn't equal nil
+		F: func(is *I) bool {
+			return is.Equal(1, nil) // 1 doesn't equal nil
 		},
 		Fail: `int(1) != <nil> // 1 doesn't equal nil`,
 	},
 	{
 		N: "Equal(nil, 2)",
-		F: func(is *I) {
-			is.Equal(nil, 2) // nil doesn't equal 2
+		F: func(is *I) bool {
+			return is.Equal(nil, 2) // nil doesn't equal 2
 		},
 		Fail: `<nil> != int(2) // nil doesn't equal 2`,
 	},
 	{
 		N: "Equal(false, false)",
-		F: func(is *I) {
-			is.Equal(false, false) // false doesn't equal false
+		F: func(is *I) bool {
+			return is.Equal(false, false) // false doesn't equal false
 		},
 		Fail: ``,
 	},
 	{
 		N: "Equal(int32(1), int64(1))",
-		F: func(is *I) {
-			is.Equal(int32(1), int64(1)) // nope
+		F: func(is *I) bool {
+			return is.Equal(int32(1), int64(1)) // nope
 		},
 		Fail: `int32(1) != int64(1) // nope`,
 	},
 	{
 		N: "Equal(map1, map2)",
-		F: func(is *I) {
+		F: func(is *I) bool {
 			m1 := map[string]interface{}{"value": 1}
 			m2 := map[string]interface{}{"value": 2}
-			is.Equal(m1, m2) // maps
+			return is.Equal(m1, m2) // maps
 		},
 		Fail: `map[value:1] != map[value:2] // maps`,
 	},
 	{
 		N: "Equal(true, map)",
-		F: func(is *I) {
+		F: func(is *I) bool {
 			m := map[string]interface{}{"value": 2}
-			is.Equal(true, m) // maps
+			return is.Equal(true, m) // maps
 		},
 		Fail: `bool(true) != map[string]interface {}(map[value:2]) // maps`,
 	},
 	{
 		N: "Equal(slice1, slice2)",
-		F: func(is *I) {
+		F: func(is *I) bool {
 			s1 := []string{"one", "two", "three"}
 			s2 := []string{"one", "two", "three", "four"}
-			is.Equal(s1, s2) // slices
+			return is.Equal(s1, s2) // slices
 		},
 		Fail: `[one two three] != [one two three four] // slices`,
 	},
 	{
 		N: "Equal(nil, chan)",
-		F: func(is *I) {
+		F: func(is *I) bool {
 			var a chan string
 			b := make(chan string)
-			is.Equal(a, b) // channels
+			return is.Equal(a, b) // channels
 		},
 		Fail: ` // channels`,
 	},
 	{
 		N: "Equal(nil, slice)",
-		F: func(is *I) {
+		F: func(is *I) bool {
 			var s1 []string
 			s2 := []string{"one", "two", "three", "four"}
-			is.Equal(s1, s2) // nil slice
+			return is.Equal(s1, s2) // nil slice
 		},
 		Fail: `<nil> != []string([one two three four]) // nil slice`,
 	},
 	{
 		N: "Equal(nil, nil)",
-		F: func(is *I) {
+		F: func(is *I) bool {
 			var s1 []string
 			var s2 []string
-			is.Equal(s1, s2) // nil slices
+			return is.Equal(s1, s2) // nil slices
 		},
 		Fail: ``,
 	},
 	{
 		N: "Equal(nil, map)",
-		F: func(is *I) {
+		F: func(is *I) bool {
 			var m1 map[string]string
 			m2 := map[string]string{}
-			is.Equal(m1, m2) // nil map
+			return is.Equal(m1, m2) // nil map
 		},
 		Fail: `<nil> != map[string]string(map[]) // nil map`,
 	},
 	{
 		N: "Equal(nil, nil)",
-		F: func(is *I) {
+		F: func(is *I) bool {
 			var m1 map[string]string
 			var m2 map[string]string
-			is.Equal(m1, m2) // nil maps
+			return is.Equal(m1, m2) // nil maps
 		},
 		Fail: ``,
 	},
 	{
 		N: `Equal("20% VAT", "0.2 VAT")`,
-		F: func(is *I) {
+		F: func(is *I) bool {
 			s1 := "20% VAT"
 			s2 := "0.2 VAT"
-			is.Equal(s1, s2) // strings
+			return is.Equal(s1, s2) // strings
 		},
 		Fail: `20% VAT != 0.2 VAT // strings`,
 	},
@@ -152,8 +152,9 @@ var tests = []struct {
 	// Fail
 	{
 		N: "Fail()",
-		F: func(is *I) {
+		F: func(is *I) bool {
 			is.Fail() // something went wrong
+			return false
 		},
 		Fail: "failed // something went wrong",
 	},
@@ -161,17 +162,17 @@ var tests = []struct {
 	// NoErr
 	{
 		N: "NoErr(nil)",
-		F: func(is *I) {
+		F: func(is *I) bool {
 			var err error
-			is.NoErr(err) // method shouldn't return error
+			return is.NoErr(err) // method shouldn't return error
 		},
 		Fail: "",
 	},
 	{
 		N: "NoErr(error)",
-		F: func(is *I) {
+		F: func(is *I) bool {
 			err := errors.New("nope")
-			is.NoErr(err) // method shouldn't return error
+			return is.NoErr(err) // method shouldn't return error
 		},
 		Fail: "err: nope // method shouldn't return error",
 	},
@@ -179,8 +180,8 @@ var tests = []struct {
 	// True
 	{
 		N: "True(1 == 2)",
-		F: func(is *I) {
-			is.True(1 == 2)
+		F: func(is *I) bool {
+			return is.True(1 == 2)
 		},
 		Fail: "not true: 1 == 2",
 	},
@@ -199,13 +200,16 @@ func testFailures(t *testing.T, colorful bool) {
 		var buf bytes.Buffer
 		is.out = &buf
 		is.colorful = colorful
-		test.F(is)
+		ok := test.F(is)
 		if len(test.Fail) == 0 && tt.failed {
 			t.Errorf("shouldn't fail: %s", test.N)
 			continue
 		}
 		if len(test.Fail) > 0 && !tt.failed {
 			t.Errorf("didn't fail: %s", test.N)
+		}
+		if (len(test.Fail) == 0) != ok {
+			t.Errorf("return value didn't match fail state: %s", test.N)
 		}
 		if colorful {
 			// if colorful, we won't check the messages

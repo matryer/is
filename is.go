@@ -129,10 +129,11 @@ func (is *I) Fail() {
 // Will output:
 //
 //	your_test.go:123: not true: val != nil
-func (is *I) True(expression bool) {
+func (is *I) True(expression bool) bool {
 	if !expression {
 		is.log("not true: $ARGS")
 	}
+	return expression
 }
 
 // Equal asserts that a and b are equal.
@@ -146,9 +147,9 @@ func (is *I) True(expression bool) {
 // Will output:
 //
 //	your_test.go:123: Hey Mat != Hi Mat // greeting
-func (is *I) Equal(a, b interface{}) {
+func (is *I) Equal(a, b interface{}) bool {
 	if areEqual(a, b) {
-		return
+		return true
 	}
 	if isNil(a) || isNil(b) {
 		is.logf("%s != %s", is.valWithType(a), is.valWithType(b))
@@ -157,6 +158,7 @@ func (is *I) Equal(a, b interface{}) {
 	} else {
 		is.logf("%s != %s", is.valWithType(a), is.valWithType(b))
 	}
+	return false
 }
 
 // New is a method wrapper around the New function.
@@ -211,10 +213,11 @@ func (is *I) valWithType(v interface{}) string {
 // Will output:
 //
 //	your_test.go:123: err: not found // getVal error
-func (is *I) NoErr(err error) {
+func (is *I) NoErr(err error) bool {
 	if err != nil {
 		is.logf("err: %s", err.Error())
 	}
+	return err == nil
 }
 
 // isNil gets whether the object is nil or not.
