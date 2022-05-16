@@ -22,7 +22,6 @@
 // the helper methods:
 //
 //	func Test(t *testing.T) {
-//
 //		// always start tests with this
 //		is := is.New(t)
 //
@@ -32,7 +31,6 @@
 //
 //		body := readBody(r)
 //		is.True(strings.Contains(body, "Hi there"))
-//
 //	}
 package is
 
@@ -45,6 +43,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strconv"
 	"strings"
 )
 
@@ -74,7 +73,19 @@ type I struct {
 var noColorFlag bool
 
 func init() {
-	envNoColor := os.Getenv("IS_NO_COLOR") == "true"
+	var envNoColor bool
+
+	// prefer https://no-color.org (with any value)
+	if _, ok := os.LookupEnv("NO_COLOR"); ok {
+		envNoColor = true
+	}
+
+	if v, ok := os.LookupEnv("IS_NO_COLOR"); ok {
+		if b, err := strconv.ParseBool(v); err == nil {
+			envNoColor = b
+		}
+	}
+
 	flag.BoolVar(&noColorFlag, "nocolor", envNoColor, "turns off colors")
 }
 
