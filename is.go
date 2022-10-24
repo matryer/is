@@ -14,9 +14,9 @@
 //
 // Will output:
 //
-//		your_test.go:123: 1 != 2 // expect to be the same
+//	your_test.go:123: 1 != 2 // expect to be the same
 //
-// Usage
+// # Usage
 //
 // The following code shows a range of useful ways you can use
 // the helper methods:
@@ -396,8 +396,8 @@ func escapeFormatString(fmt string) string {
 }
 
 const (
-	colorNormal  = "\u001b[39m"
+	colorNormal  = "\u001b[00m"
 	colorComment = "\u001b[31m"
-	colorFile    = "\u001b[90m"
-	colorType    = "\u001b[90m"
+	colorFile    = "\u001b[02m"
+	colorType    = "\u001b[02m"
 )
