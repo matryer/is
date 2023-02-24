@@ -16,16 +16,12 @@ the helper methods:
 
 ```go
 func Test(t *testing.T) {
-
 	is := is.New(t)
-
 	signedin, err := isSignedIn(ctx)
 	is.NoErr(err)            // isSignedIn error
 	is.Equal(signedin, true) // must be signed in
-
 	body := readBody(r)
 	is.True(strings.Contains(body, "Hi there"))
-
 }
 ```
 
