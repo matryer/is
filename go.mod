@@ -1,3 +1,3 @@
-module github.com/matryer/is
+module github.com/adoublef/is
 
 go 1.14
