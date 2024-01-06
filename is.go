@@ -228,6 +228,21 @@ func (is *I) NoErr(err error) {
 	}
 }
 
+// Err asserts that any error in err's tree matches target
+// 
+// 	func Test(t *testing.T) {
+// 		is := is.New(t)
+// 		val, err := parseVal()
+// 		is.Err(err, ErrParseVal)
+// Will output:
+// 
+// 	your_test.go:123: "too short" != "bad format"
+func (is *I) Err(err, target error) {
+	if !errors.Is(err, target) {
+		is.logf("%s != %s", err, target)
+	}
+}
+
 // isNil gets whether the object is nil or not.
 func isNil(object interface{}) bool {
 	if object == nil {
