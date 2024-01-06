@@ -45,6 +45,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"errors"
 )
 
 // T reports when failures occur.
