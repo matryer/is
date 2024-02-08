@@ -7,7 +7,7 @@ package example
 import (
 	"testing"
 
-	"github.com/matryer/is"
+	"go.adoublef.dev/is"
 )
 
 func TestSomething(t *testing.T) {
