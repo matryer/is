@@ -161,12 +161,10 @@ func (is *I) Equal(a, b interface{}) {
 	if areEqual(a, b) {
 		return
 	}
-	if isNil(a) || isNil(b) {
+	if isNil(a) || isNil(b) || reflect.ValueOf(a).Type() != reflect.ValueOf(b).Type() {
 		is.logf("%s != %s", is.valWithType(a), is.valWithType(b))
-	} else if reflect.ValueOf(a).Type() == reflect.ValueOf(b).Type() {
-		is.logf("%v != %v", a, b)
 	} else {
-		is.logf("%s != %s", is.valWithType(a), is.valWithType(b))
+		is.logf("%v != %v", a, b)
 	}
 }
 
