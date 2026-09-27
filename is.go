@@ -40,6 +40,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"math/big"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -249,12 +250,32 @@ func areEqual(a, b interface{}) bool {
 	if isNil(a) || isNil(b) {
 		return false
 	}
+	if equalBig(a, b) {
+		return true
+	}
 	if reflect.DeepEqual(a, b) {
 		return true
 	}
 	aValue := reflect.ValueOf(a)
 	bValue := reflect.ValueOf(b)
 	return aValue == bValue
+}
+
+// equalBig compares math/big values with Cmp so that zeros with different
+// internal signs still compare equal (DeepEqual does not).
+func equalBig(a, b interface{}) bool {
+	switch av := a.(type) {
+	case *big.Int:
+		bv, ok := b.(*big.Int)
+		return ok && av.Cmp(bv) == 0
+	case *big.Float:
+		bv, ok := b.(*big.Float)
+		return ok && av.Cmp(bv) == 0
+	case *big.Rat:
+		bv, ok := b.(*big.Rat)
+		return ok && av.Cmp(bv) == 0
+	}
+	return false
 }
 
 // loadComment gets the Go comment from the specified line

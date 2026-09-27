@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"math/big"
 	"strings"
 	"testing"
 )
@@ -288,4 +289,12 @@ func TestFormatStringEscape(t *testing.T) {
 	if strings.Contains(actual, `%!`) {
 		t.Errorf("string was not escaped correctly: %s", actual)
 	}
+}
+
+func TestEqualBigZero(t *testing.T) {
+	is := New(t)
+	big0 := new(big.Int).Add(big.NewInt(-1), big.NewInt(1))
+	is.Equal(new(big.Int), big0)
+	is.Equal(new(big.Float), big.NewFloat(0))
+	is.Equal(new(big.Rat), big.NewRat(0, 1))
 }
