@@ -370,7 +370,9 @@ func (is *I) decorate(s string) string {
 		// expand arguments (if $ARGS is present)
 		if strings.Contains(line, "$ARGS") {
 			args, _ := loadArguments(path, lineNumber)
-			line = strings.Replace(line, "$ARGS", args, -1)
+			// The decorated message is passed to a formatted print function,
+			// so any format verbs in the assertion source must be escaped too.
+			line = strings.Replace(line, "$ARGS", escapeFormatString(args), -1)
 		}
 		buf.WriteString(line)
 	}
